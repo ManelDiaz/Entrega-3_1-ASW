@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Control - Gym</title>
+</head>
+<body>
+    <h1>Panel de Control - Gym</h1>
+    <h2>Estadísticas</h2>
+    <p>Total de eventos: {{ total_eventos }}</p>
+    <p>Usuarios activos: {{ usuarios_activos }}</p>
+    <ul>
+        {% for tipo, count in eventos_tipo.items() %}
+        <li>{{ tipo }}: {{ count }}</li>
+        {% endfor %}
+    </ul>
+    <h2>Alertas recientes (entradas en Cardio)</h2>
+    <ul>
+        {% for alerta in alertas %}
+        <li>{{ alerta["nombre"] }} (ID: {{ alerta["usuario_id"] }}) - {{ alerta["timestamp"] }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
