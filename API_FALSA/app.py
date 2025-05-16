@@ -29,7 +29,7 @@ def generar_usuarios(cantidad):
             "membresia": random.choice(MEMBRESIAS)
         }
         usuarios.append(usuario)
-        USUARIOS_ESTADO[user_id] = False 
+        USUARIOS_ESTADO[user_id] = False  # Todos fuera al inicio
     return usuarios
 
 @app.before_first_request
@@ -41,34 +41,63 @@ def setup():
 def get_usuarios():
     return jsonify(USUARIOS)
 
-def evento_entrada_salida(tipo):
-    usuario = random.choice(USUARIOS)
-    if tipo == "entrada":
-        USUARIOS_ESTADO[usuario["id"]] = True
-        zona = random.choice(ZONAS)
-    else:
-        USUARIOS_ESTADO[usuario["id"]] = False
-        zona = None
+def evento_entrada():
+    fuera = [u for u in USUARIOS if not USUARIOS_ESTADO[u["id"]]]
+    if not fuera:
+        return None  # No hay nadie fuera
+    usuario = random.choice(fuera)
+    USUARIOS_ESTADO[usuario["id"]] = True
+    zona = random.choice(ZONAS)
     return {
-        "evento": tipo,
+        "evento": "entrada",
         "usuario_id": usuario["id"],
         "nombre": usuario["nombre"],
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "zona": zona
     }
 
+def evento_salida():
+    dentro = [u for u in USUARIOS if USUARIOS_ESTADO[u["id"]]]
+    if not dentro:
+        return None  # No hay nadie dentro
+    usuario = random.choice(dentro)
+    USUARIOS_ESTADO[usuario["id"]] = False
+    return {
+        "evento": "salida",
+        "usuario_id": usuario["id"],
+        "nombre": usuario["nombre"],
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "zona": None
+    }
+
 @app.route('/evento/entrada', methods=['GET'])
 def generar_entrada():
-    return jsonify(evento_entrada_salida("entrada"))
+    evento = evento_entrada()
+    if evento:
+        return jsonify(evento)
+    return jsonify({"error": "No hay usuarios fuera"}), 400
 
 @app.route('/evento/salida', methods=['GET'])
 def generar_salida():
-    return jsonify(evento_entrada_salida("salida"))
+    evento = evento_salida()
+    if evento:
+        return jsonify(evento)
+    return jsonify({"error": "No hay usuarios dentro"}), 400
 
 @app.route('/evento/random', methods=['GET'])
 def generar_evento_random():
-    tipo = random.choice(["entrada", "salida"])
-    return jsonify(evento_entrada_salida(tipo))
+    posibles = []
+    if any(not USUARIOS_ESTADO[u["id"]] for u in USUARIOS):
+        posibles.append("entrada")
+    if any(USUARIOS_ESTADO[u["id"]] for u in USUARIOS):
+        posibles.append("salida")
+    if not posibles:
+        return jsonify({"error": "No hay eventos posibles"}), 400
+    tipo = random.choice(posibles)
+    if tipo == "entrada":
+        return generar_entrada()
+    else:
+        return generar_salida()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
