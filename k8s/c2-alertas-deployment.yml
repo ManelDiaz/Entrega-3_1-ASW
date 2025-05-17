@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: c2-alertas
+  labels:
+    app: c2-alertas
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: c2-alertas
+  template:
+    metadata:
+      labels:
+        app: c2-alertas
+    spec:
+      containers:
+      - name: c2-alertas
+        image: c2-alertas:latest
+        imagePullPolicy: Never
+        env:
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-service"
+        - name: RABBITMQ_USER
+          value: "user"
+        - name: RABBITMQ_PASS
+          value: "bitnami"

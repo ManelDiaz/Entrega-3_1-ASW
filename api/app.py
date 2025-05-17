@@ -32,10 +32,12 @@ def generar_usuarios(cantidad):
         USUARIOS_ESTADO[user_id] = False  # Todos fuera al inicio
     return usuarios
 
-@app.before_first_request
-def setup():
+@app.route('/inicializar', methods=['POST'])
+def inicializar():
     global USUARIOS
-    USUARIOS = generar_usuarios(100)
+    cantidad = request.json.get('cantidad', 100)
+    USUARIOS = generar_usuarios(cantidad)
+    return jsonify({"mensaje": f"Se han generado {len(USUARIOS)} usuarios"})
 
 @app.route('/usuarios', methods=['GET'])
 def get_usuarios():

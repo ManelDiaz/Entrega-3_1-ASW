@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: c1-mongodb
+  labels:
+    app: consumer-mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer-mongodb
+  template:
+    metadata:
+      labels:
+        app: consumer-mongodb
+    spec:
+      containers:
+      - name: c1-mongodb
+        image: c1-mongodb:latest
+        imagePullPolicy: Never
+        env:
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-service"
+        - name: RABBITMQ_USER
+          value: "user"
+        - name: RABBITMQ_PASS
+          value: "bitnami"
+        - name: MONGO_URI
+          value: "mongodb://mongodb:27017/"

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: c3-estadisticas
+  labels:
+    app: c3-estadisticas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: c3-estadisticas
+  template:
+    metadata:
+      labels:
+        app: c3-estadisticas
+    spec:
+      containers:
+      - name: c3-estadisticas
+        image: c3-estadisticas:latest
+        imagePullPolicy: Never
+        env:
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-service"
+        - name: RABBITMQ_USER
+          value: "user"
+        - name: RABBITMQ_PASS
+          value: "bitnami"
+        - name: MONGO_URI
+          value: "mongodb://root:example@mongodb-service:27017/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: estadisticas-service
+spec:
+  selector:
+    app: c3-estadisticas
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
