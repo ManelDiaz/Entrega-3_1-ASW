@@ -3,7 +3,7 @@ import json
 from pymongo import MongoClient
 import os
 
-RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq-service")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER", "user")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "bitnami")
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongodb:27017/")

@@ -5,7 +5,7 @@ metadata:
   labels:
     app: c2-alertas
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: c2-alertas
@@ -25,3 +25,5 @@ spec:
           value: "user"
         - name: RABBITMQ_PASS
           value: "bitnami"
+        - name: MONGO_URI
+          value: "mongodb://mongodb:27017/"
