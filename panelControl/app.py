@@ -126,18 +126,44 @@ def get_stats():
     total_eventos, eventos_tipo, usuarios_activos, _ = calculate_stats_realtime()
     return total_eventos, eventos_tipo, usuarios_activos
 
+def convert_to_local_time(utc_timestamp_str):
+    """Convierte un timestamp UTC en formato ISO a hora local española"""
+    try:
+        if isinstance(utc_timestamp_str, str):
+            # Parsear el timestamp ISO a objeto datetime con timezone UTC
+            utc_time = datetime.datetime.fromisoformat(utc_timestamp_str.replace('Z', '+00:00'))
+        else:
+            # Si ya es un objeto datetime, asegurarse de que tenga timezone
+            utc_time = utc_timestamp_str.replace(tzinfo=timezone.utc) if utc_timestamp_str.tzinfo is None else utc_timestamp_str
+
+        # Convertir a timezone española
+        local_time = utc_time.astimezone(TIMEZONE_ESP)
+        return local_time.strftime("%d/%m/%Y %H:%M:%S")
+    except Exception as e:
+        print(f"[ERROR] Error al convertir timestamp: {e}")
+        return utc_timestamp_str  # Devolver el original si hay error
+
 def get_movimientos():
     movimientos = list(collection.find(
         {"evento": {"$in": ["entrada", "salida"]}}
     ).sort("timestamp", -1).limit(50))
+    
+    # Convertir timestamps a hora local
+    for mov in movimientos:
+        if "timestamp" in mov:
+            mov["timestamp"] = convert_to_local_time(mov["timestamp"])
+    
     return movimientos
 
 def get_alertas():
     # Buscar alertas en la nueva colección específica de alertas
     alertas = list(alerts_collection.find().sort("timestamp", -1).limit(10))
     
-    # Formatear mensajes de alerta
+    # Formatear mensajes de alerta y convertir timestamps
     for alerta in alertas:
+        if "timestamp" in alerta:
+            alerta["timestamp"] = convert_to_local_time(alerta["timestamp"])
+            
         if alerta.get("tipo") == "ocupacion":
             alerta["mensaje"] = f"Alta ocupación en zona {alerta.get('zona')}: {alerta.get('porcentaje')}%"
         elif alerta.get("tipo") == "equipo":
