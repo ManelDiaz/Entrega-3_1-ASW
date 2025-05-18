@@ -2,6 +2,8 @@ from flask import Flask, render_template
 from pymongo import MongoClient
 import os
 import datetime
+from datetime import timezone, timedelta
+
 
 app = Flask(__name__)
 
@@ -11,6 +13,14 @@ db = mongo_client['gym']
 collection = db['events']
 stats_collection = db['stats']
 alerts_collection = db['alerts']
+
+TIMEZONE_OFFSET = 2
+TIMEZONE_ESP = timezone(timedelta(hours=TIMEZONE_OFFSET))
+
+def get_local_time():
+    """Devuelve la hora actual en la zona horaria española"""
+    return datetime.datetime.now(TIMEZONE_ESP)
+
 
 # Capacidades máximas por zona (igual que en consumer_estadisticas.py)
 ZONE_CAPACITY = {
@@ -22,7 +32,7 @@ ZONE_CAPACITY = {
 
 def calculate_stats_realtime():
     """Calcula estadísticas en tiempo real con total consistencia"""
-    start_time = datetime.datetime.utcnow()
+    start_time = get_local_time()
     print(f"[DEBUG] Iniciando cálculo en tiempo real: {start_time}")
     
     total_eventos = collection.count_documents({})
@@ -33,8 +43,7 @@ def calculate_stats_realtime():
     ])
     eventos_tipo = {e["_id"]: e["count"] for e in eventos_tipo_cursor}
     
-    # Obtener el inicio del día actual en UTC
-    today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today = get_local_time().replace(hour=0, minute=0, second=0, microsecond=0)
     
     # Obtener todos los eventos de entrada/salida para determinar el estado actual
     eventos = list(collection.find({
@@ -108,7 +117,7 @@ def calculate_stats_realtime():
     # Verificación para debugging
     print(f"[DEBUG] Usuarios por zona: {', '.join([f'{zona}:{len(usuarios)}' for zona, usuarios in usuarios_por_zona.items()])}")
     print(f"[DEBUG] Total usuarios activos: {total_usuarios_activos}")
-    print(f"[DEBUG] Cálculo completado en {(datetime.datetime.utcnow() - start_time).total_seconds()}s")
+    print(f"[DEBUG] Cálculo completado en {(get_local_time() - start_time).total_seconds()}s")
     
     return total_eventos, eventos_tipo, total_usuarios_activos, stats_zonas
 
@@ -153,7 +162,7 @@ def index():
     alertas = get_alertas()
     movimientos = get_movimientos()
     
-    timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    timestamp = get_local_time().strftime("%d/%m/%Y %H:%M:%S")
     print(f"[INFO] Datos actualizados: {timestamp}, usuarios={usuarios_activos}, zonas={sum(stats['ocupacion_actual'] for stats in estadisticas_zonas.values())}")
     
     return render_template(
